@@ -44,7 +44,9 @@ const LoanSchema = new mongoose.Schema({
 
     paid:Number,
 
-    isOverdue:Boolean
+    isOverdue:Boolean,
+    
+    note: String // Thêm trường ghi chú
 
 });
 
@@ -63,6 +65,38 @@ const TransactionSchema = new mongoose.Schema({
 });
 
 const Transaction = mongoose.model("Transaction",TransactionSchema);
+
+//////////////////////////////////////////////////////
+// SETTINGS (Cấu hình thông tin chuyển khoản)
+//////////////////////////////////////////////////////
+
+const SettingsSchema = new mongoose.Schema({
+    staffName: String,
+    accountNumber: String
+});
+
+const Settings = mongoose.model("Settings", SettingsSchema);
+
+app.get("/api/settings", async (req, res) => {
+    let settings = await Settings.findOne();
+    if (!settings) {
+        settings = { staffName: "Vui lòng chờ", accountNumber: "Vui lòng chờ" };
+    }
+    res.json(settings);
+});
+
+app.post("/api/settings", async (req, res) => {
+    let settings = await Settings.findOne();
+    if (settings) {
+        settings.staffName = req.body.staffName;
+        settings.accountNumber = req.body.accountNumber;
+        await settings.save();
+    } else {
+        settings = new Settings(req.body);
+        await settings.save();
+    }
+    res.json({ success: true });
+});
 
 //////////////////////////////////////////////////////
 // LOGIN
@@ -223,6 +257,7 @@ app.get("/login",(req,res)=>{
         path.join(__dirname,"public","login.html")
     );
 });
+
 app.get("/admin",(req,res)=>{
 
     res.sendFile(
@@ -241,6 +276,12 @@ app.get("/user",(req,res)=>{
 
     );
 
+});
+
+app.get("/transfer", (req, res) => {
+    res.sendFile(
+        path.join(__dirname, "public", "transfer.html")
+    );
 });
 
 //////////////////////////////////////////////////////

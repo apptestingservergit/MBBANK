@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alertBox.classList.add("d-none");
         
         // Hiệu ứng Loading cho nút đăng nhập
-        btnLogin.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang xử lý...';
+        btnLogin.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang xử lý....';
         btnLogin.disabled = true;
 
         try {

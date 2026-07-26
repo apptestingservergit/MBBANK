@@ -71,6 +71,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <td class="text-success">${formatCurrency(loan.paid)}</td>
                     <td class="text-danger fw-bold">${formatCurrency(remain)}</td>
                     <td>${statusBadge}</td>
+                    <td><small class="text-muted">${loan.note || '-'}</small></td> <!-- Hiển thị ghi chú -->
                 </tr>
             `;
         }).join('');

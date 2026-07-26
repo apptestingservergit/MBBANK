@@ -83,34 +83,35 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('stat-total-remain').textContent = formatCurrency(totalLoan - totalPaid);
     };
 
-    const renderLoans = () => {
-        const tbody = document.getElementById('loanTableBody');
-        tbody.innerHTML = currentLoans.map((loan, index) => {
-            const remain = loan.amount - loan.paid;
-            const statusBadge = loan.isOverdue 
-                ? '<span class="badge bg-danger">Quá Hạn</span>' 
-                : '<span class="badge bg-success">Đang Hạn</span>';
-            
-            return `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td class="fw-bold">${loan.name}</td>
-                    <td class="text-primary fw-bold">${formatCurrency(loan.amount)}</td>
-                    <td class="text-success">${formatCurrency(loan.paid)}</td>
-                    <td class="text-danger fw-bold">${formatCurrency(remain)}</td>
-                    <td>${statusBadge}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-warning text-dark me-1" onclick="openEditLoan('${loan._id}')" title="Sửa">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteLoan('${loan._id}')" title="Xóa">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    };
+const renderLoans = () => {
+    const tbody = document.getElementById('loanTableBody');
+    tbody.innerHTML = currentLoans.map((loan, index) => {
+        const remain = loan.amount - loan.paid;
+        const statusBadge = loan.isOverdue 
+            ? '<span class="badge bg-danger">Quá Hạn</span>' 
+            : '<span class="badge bg-success">Đang Hạn</span>';
+        
+        return `
+            <tr>
+                <td>${index + 1}</td>
+                <td class="fw-bold">${loan.name}</td>
+                <td class="text-primary fw-bold">${formatCurrency(loan.amount)}</td>
+                <td class="text-success">${formatCurrency(loan.paid)}</td>
+                <td class="text-danger fw-bold">${formatCurrency(remain)}</td>
+                <td>${statusBadge}</td>
+                <td><small class="text-muted">${loan.note || '-'}</small></td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-warning text-dark me-1" onclick="openEditLoan('${loan._id}')" title="Sửa">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteLoan('${loan._id}')" title="Xóa">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+};
 
     const renderTrans = () => {
         const tbody = document.getElementById('tranTableBody');
@@ -129,65 +130,96 @@ document.addEventListener("DOMContentLoaded", function () {
         `).join('');
     };
 
-    // === 4. CRUD KHOẢN VAY ===
-    document.getElementById('addLoanForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const data = {
-            name: document.getElementById('addLoanName').value,
-            amount: Number(document.getElementById('addLoanAmount').value),
-            paid: Number(document.getElementById('addLoanPaid').value),
-            isOverdue: document.getElementById('addLoanStatus').value === 'true'
-        };
+    // Load cấu hình vào trang admin
+const loadSettings = async () => {
+    try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+        document.getElementById('configStaffName').value = data.staffName === "Vui lòng chờ" ? "" : data.staffName;
+        document.getElementById('configAccountNumber').value = data.accountNumber === "Vui lòng chờ" ? "" : data.accountNumber;
+    } catch (e) { console.error(e); }
+};
 
-        const res = await fetch('/api/loans', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
-        
-        if (res.ok) {
-            addLoanModal.hide();
-            document.getElementById('addLoanForm').reset();
-            showToast("Thêm khoản vay thành công!");
-            loadData();
-        }
+document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+        staffName: document.getElementById('configStaffName').value || "Vui lòng chờ",
+        accountNumber: document.getElementById('configAccountNumber').value || "Vui lòng chờ"
+    };
+    const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
     });
+    if (res.ok) {
+        showToast("Cập nhật thông tin chuyển khoản thành công!");
+    }
+});
 
-    window.openEditLoan = (id) => {
-        const loan = currentLoans.find(l => l._id === id);
-        if(!loan) return;
+// Gọi loadSettings() trong hàm loadData chính của admin.js
 
-        document.getElementById('editLoanId').value = loan._id;
-        document.getElementById('editLoanName').value = loan.name;
-        document.getElementById('editLoanAmount').value = loan.amount;
-        document.getElementById('editLoanPaid').value = loan.paid;
-        document.getElementById('editLoanStatus').value = loan.isOverdue.toString();
-        
-        editLoanModal.show();
+    // === 4. CRUD KHOẢN VAY ===
+document.getElementById('addLoanForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('addLoanName').value,
+        amount: Number(document.getElementById('addLoanAmount').value),
+        paid: Number(document.getElementById('addLoanPaid').value),
+        isOverdue: document.getElementById('addLoanStatus').value === 'true',
+        note: document.getElementById('addLoanNote').value // Lấy giá trị ghi chú
     };
 
-    document.getElementById('editLoanForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('editLoanId').value;
-        const data = {
-            name: document.getElementById('editLoanName').value,
-            amount: Number(document.getElementById('editLoanAmount').value),
-            paid: Number(document.getElementById('editLoanPaid').value),
-            isOverdue: document.getElementById('editLoanStatus').value === 'true'
-        };
-
-        const res = await fetch(`/api/loans/${id}`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
-
-        if (res.ok) {
-            editLoanModal.hide();
-            showToast("Cập nhật thành công!");
-            loadData();
-        }
+    const res = await fetch('/api/loans', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
     });
+    
+    if (res.ok) {
+        addLoanModal.hide();
+        document.getElementById('addLoanForm').reset();
+        showToast("Thêm khoản vay thành công!");
+        loadData();
+    }
+});
+
+window.openEditLoan = (id) => {
+    const loan = currentLoans.find(l => l._id === id);
+    if(!loan) return;
+
+    document.getElementById('editLoanId').value = loan._id;
+    document.getElementById('editLoanName').value = loan.name;
+    document.getElementById('editLoanAmount').value = loan.amount;
+    document.getElementById('editLoanPaid').value = loan.paid;
+    document.getElementById('editLoanStatus').value = loan.isOverdue.toString();
+    document.getElementById('editLoanNote').value = loan.note || ''; // Điền ghi chú cũ vào form sửa
+    
+    editLoanModal.show();
+};
+
+document.getElementById('editLoanForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('editLoanId').value;
+    const data = {
+        name: document.getElementById('editLoanName').value,
+        amount: Number(document.getElementById('editLoanAmount').value),
+        paid: Number(document.getElementById('editLoanPaid').value),
+        isOverdue: document.getElementById('editLoanStatus').value === 'true',
+        note: document.getElementById('editLoanNote').value // Lấy ghi chú mới
+    };
+
+    const res = await fetch(`/api/loans/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+        editLoanModal.hide();
+        showToast("Cập nhật thành công!");
+        loadData();
+    }
+});
 
     window.deleteLoan = async (id) => {
         if (confirm("Bạn có chắc chắn muốn xóa khoản vay này không?")) {
