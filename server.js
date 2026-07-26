@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, "public")));
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 const mongoURI =
 "mongodb://lek08670_db_user:FAO3ldqdKZMAMob5@ac-cgnebag-shard-00-00.yyenbmv.mongodb.net:27017,ac-cgnebag-shard-00-01.yyenbmv.mongodb.net:27017,ac-cgnebag-shard-00-02.yyenbmv.mongodb.net:27017/quan_ly_vay?ssl=true&replicaSet=atlas-qeivq6-shard-0&authSource=admin&retryWrites=true&w=majority";
